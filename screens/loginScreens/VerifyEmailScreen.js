@@ -24,7 +24,8 @@ const VerifyEmailScreen = ({ navigation }) => {
             } else {
                 Alert.alert('Error', response.message);
             }
-        } catch (error) {
+            
+        } catch (error){
             console.log('Error', 'Something went wrong!');
         }
     };

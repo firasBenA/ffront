@@ -1,119 +1,127 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList } from 'react-native';
-import * as SignalR from '@microsoft/signalr';
+import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import axios from 'axios';
 import { BASE_URL } from './config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SignalR from '@microsoft/signalr';
 
-const ChatScreen = () => {
-  const [messages, setMessages] = useState([]);
+const ChatScreen = ({ route }) => {
+  const { conversation } = route.params;
+
   const [connection, setConnection] = useState(null);
-  const [input, setInput] = useState('');
+  const [messageInput, setMessageInput] = useState('');
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
+    fetchMessages();
     const newConnection = new SignalR.HubConnectionBuilder()
-      .withUrl(`${BASE_URL}chatHub`) 
+      .withUrl(`${BASE_URL}chathub`)
       .withAutomaticReconnect()
       .build();
 
     setConnection(newConnection);
+  }, []);
+
+    useEffect(() => {
+    if (!connection) return;
+
+    const startConnection = async () => {
+      try {
+        await connection.start();
+        console.log('Connected to SignalR hub');
+        connection.on('ReceiveMessage', message => {
+          setMessages(messages => [...messages, message]);
+        });
+        connection.invoke('JoinConversation', conversation.id.toString());
+      } catch (error) {
+        console.log('Connection failed:', error);
+      }
+    };
+
+    startConnection();
 
     return () => {
-      if (connection) {
+      if (connection && connection.state === SignalR.HubConnectionState.Connected) {
+        connection.invoke('LeaveConversation', conversation.id.toString());
         connection.stop();
       }
     };
-  }, []);
+  }, [connection, conversation.id]);
 
-  useEffect(() => {
-    if (connection && connection.state === SignalR.HubConnectionState.Disconnected) {
-      connection.start()
-        .then(() => {
-          console.log('Connection established!');
-          connection.on('ReceiveMessage', (message) => {
-            setMessages(prevMessages => [...prevMessages, message]);
-          });
-        })
-        .catch(console.error);
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    fetchPreviousMessages();
-  }, []);
-
-  const fetchPreviousMessages = async () => {
+  const fetchMessages = async () => {
     try {
-      const response = await fetch(`${BASE_URL}api/chat`);
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data);
-      } else {
-        console.error('Failed to fetch previous messages');
-      }
+      const response = await axios.get(`${BASE_URL}api/Conversation/${conversation.id}/messages`);
+      setMessages(response.data);
     } catch (error) {
-      console.error('Error fetching previous messages:', error);
+      console.error('Error fetching messages:', error);
     }
   };
 
   const sendMessage = async () => {
     try {
-      const userString = await AsyncStorage.getItem('user');
-      const user = JSON.parse(userString); // Parse the user object from string to JSON
-      console.log(user);
-      const userId = user.id;
-      if (!userId) {
-        console.error('User ID not found in AsyncStorage');
-        return;
-      }
-
-      const messageData = {
-        message: input,
-        idSender: userId,
-        createdAt: new Date().toISOString(), // Example timestamp
+      if (!messageInput.trim()) return;
+  
+      const senderId = '3'; // Replace with actual senderId
+      const receiverId = '2'; // Replace with actual receiverId
+  
+      const message = {
+        conversationId: conversation.id.toString(),
+        senderId: senderId,
+        receiverId: receiverId,
+        text: messageInput,
       };
-
-      const response = await fetch(`${BASE_URL}api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messageData),
-      });
-
-      if (response.ok) {
-        setInput('');
-      } else {
-        console.error('Failed to send message:', response.statusText);
+  
+      if (connection) {
+        await connection.invoke('SendMessage', message.senderId, message.receiverId, message.text);
+        setMessageInput('');
       }
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
-
-
-  const renderMessageItem = ({ item }) => (
-    <Text>{item.idSender}: {item.message}</Text>
+  
+  
+  const renderItem = ({ item }) => (
+    <View style={styles.messageItem}>
+      <Text>{item.text}</Text>
+    </View>
   );
 
   return (
-    <View style={{ marginTop: 200 }}>
+    <View style={styles.container}>
       <FlatList
         data={messages}
-        renderItem={renderMessageItem}
-        keyExtractor={(item, index) => index.toString()}
-        ListHeaderComponent={<Text>Chat Messages:</Text>}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
       />
       <TextInput
-        value={input}
-        onChangeText={(text) => setInput(text)}
+        style={styles.messageInput}
+        value={messageInput}
+        onChangeText={setMessageInput}
         placeholder="Type your message..."
       />
-      <Button
-        title="Send"
-        onPress={sendMessage}
-      />
+      <Button title="Send" onPress={sendMessage} />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+  },
+  messageItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  messageInput: {
+    marginTop: 10,
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+});
 
 export default ChatScreen;

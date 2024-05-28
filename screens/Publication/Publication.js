@@ -34,6 +34,7 @@ const Publication = () => {
   const [equipment, setEquipment] = useState(null);
 
   const [userAvatar, setUserAvatar] = useState('');
+  const [userIdRole, setUserIdRole] = useState(null);
   const [langue, setLangue] = useState('');
   const [dateInscription, setDateInscription] = useState('');
   const [userName, setUserName] = useState('');
@@ -83,6 +84,19 @@ const Publication = () => {
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
+  };
+
+  const handleRestrictedAction = () => {
+    Alert.alert(
+      "Access Denied",
+      "You need to sign in to perform this action.",
+      [
+        {
+          text: "OK",
+          onPress: () => navigation.navigate('SignInScreen'),
+        },
+      ],
+    );
   };
 
   const handleCheckCard = async () => {
@@ -182,29 +196,29 @@ const Publication = () => {
   const isDateOverlap = (startDate, endDate, reservations) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-  
+
     return reservations.some(reservation => {
       const resStart = new Date(reservation.startDate);
       const resEnd = new Date(reservation.endDate);
-  
+
       return (start <= resEnd && end >= resStart);
     });
   };
-  
+
   const reserve = async () => {
     const userData = await AsyncStorage.getItem('user');
     const user = JSON.parse(userData);
     const reservantName = user.name;
     const reservantId = user.id;
     console.log('User ID:', reservantId, 'Reservant Name:', reservantName);
-  
+
     axios.get(`${BASE_URL}api/Reservation/boat/${boatId}`)
       .then(response => {
         if (isDateOverlap(startDate, endDate, response.data)) {
           Alert.alert('Reservation Failed', 'Selected dates are already reserved for this boat.');
           return;
         }
-  
+
         axios.post(`${BASE_URL}api/Reservation`, {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
@@ -286,7 +300,9 @@ const Publication = () => {
       console.log(userId)
       try {
         const response = await axios.get(`${BASE_URL}api/User/${userId}`);
+
         setUserAvatar(response.data.avatar);
+        setUserIdRole(response.data.idRole);
         setUserName(response.data.name);
         setDateInscription(response.data.dateInscription);
         setLangue(response.data.langue);
@@ -429,7 +445,7 @@ const Publication = () => {
 
   const formatLanguagesSpoken = (languages) => {
     if (!languages || languages.length === 0) {
-      return 'English'; 
+      return 'English';
     } else {
       return languages[0]; // Return the first language if only one language is spoken
     }
@@ -462,7 +478,7 @@ const Publication = () => {
         }>
         <View>
           {boats.imageUrl && <Image source={{ uri: `${BASE_URL}` + boats.imageUrl }} style={styles.image} />}
-          
+
 
 
         </View>
@@ -575,10 +591,20 @@ const Publication = () => {
             </View>
             <Text style={{ fontFamily: 'Lato-Regular', fontSize: 17, marginLeft: 10, paddingBottom: 20 }}>Member since :  {formatMemberSinceDate(dateInscription)}</Text>
             <Text style={{ fontFamily: 'Lato-Regular', fontSize: 17, marginLeft: 10, paddingBottom: 20 }}>Languages spoken: {formatLanguagesSpoken(langue)}</Text>
+            {userIdRole === null ? (
+              <View style={styles.container}>
+                <Text>Loading...</Text>
+              </View>
+            ) : userIdRole === 2 ? (
+              <TouchableOpacity style={styles.btn} onPress={handleContact}>
+                <Text style={{ fontSize: 16, fontWeight: "500" }}>Send a message</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.btn} onPress={() => handleRestrictedAction()}>
+                <Text style={{ fontSize: 16, fontWeight: "500" }}>Send a message</Text>
+              </TouchableOpacity>
+            )}
 
-            <TouchableOpacity style={styles.btn} onPress={handleContact}>
-              <Text style={{ fontSize: 16, fontWeight: "500" }}>Send a message</Text>
-            </TouchableOpacity>
           </View>
 
         </View>
@@ -611,9 +637,20 @@ const Publication = () => {
           <Text style={styles.PriceText}>${price} / night</Text>
           <Text style={styles.ReviewText}>{averageRating} ( {feedbackCount} reviews )</Text>
         </View>
-        <TouchableOpacity style={styles.reserverBtn} onPress={() => setModalVisible(true)}>
-          <Text style={{ fontFamily: "Lato-Bold", fontSize: 16, color: "white", alignSelf: "center", paddingVertical: 15 }}>Reserve</Text>
-        </TouchableOpacity>
+        {userIdRole === null ? (
+          <View style={styles.container}>
+            <Text>Loading...</Text>
+          </View>
+        ) :
+          userIdRole === 2 ? (
+            <TouchableOpacity style={styles.reserverBtn} onPress={() => setModalVisible(true)}>
+              <Text style={{ fontFamily: "Lato-Bold", fontSize: 16, color: "white", alignSelf: "center", paddingVertical: 15 }}>Reserve</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.reserverBtn} onPress={() => handleRestrictedAction()}>
+              <Text style={{ fontFamily: "Lato-Bold", fontSize: 16, color: "white", alignSelf: "center", paddingVertical: 15 }}>Reserve</Text>
+            </TouchableOpacity>
+          )}
       </View>
       <Modal
         animationType="slide"
@@ -755,7 +792,7 @@ const Publication = () => {
 
                     />
                   </View>
-                  
+
                   <View style={{ flexDirection: "column", width: "30%" }}>
                     <Text style={styles.paymentLabel}>Security Code</Text>
                     <TextInput
@@ -790,7 +827,6 @@ const Publication = () => {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
               <Text style={{ fontFamily: "Lato-Regular", fontSize: 18, color: 'grey' }}>Total Fee</Text>
               <Text style={{ fontFamily: "Lato-Bold", fontSize: 18, color: 'red' }}>${Math.ceil(newTotalFee)}</Text>
-
             </View>
           </View>
 

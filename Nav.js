@@ -32,6 +32,7 @@ import ProfileUser from './screens/Profile/ProfileUser'
 import EditBoat from './screens/Profile/EditBoat'
 import Test from './screens/Publication/Test'
 import VerifyEmailScreen from './screens/loginScreens/VerifyEmailScreen';
+import AdministrerCompte from './AdministrerCompte';
 
 const Stack = createStackNavigator();
 
@@ -104,30 +105,68 @@ const TabGroup = () => {
 }
 
 const Nav = () => {
-    const { isAuthenticated } = useContext(AuthService);
-
+    const { isAuthenticated, user } = useContext(AuthService);
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName={isAuthenticated ? 'TabGroup' : 'SignInScreen'}>
-                <Stack.Screen name="HomeScreen" component={TabGroup} options={{ headerShown: false }} />
-                <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false, tabBarVisible: false }} />
-                <Stack.Screen name="ProfilSettingScreen" component={ProfilSettingScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="Publication" component={Publication} options={{ headerShown: false }} />
-                <Stack.Screen name="Photos" component={Photos} options={{ headerShown: false }} />
-                <Stack.Screen name="ProfilScreen" component={ProfilScreen} options={{ headerShown: false, tabBarVisible: false }} />
-                <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false, tabBarVisible: false }} />
-                <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ headerShown: false, tabBarVisible: false }} />
-                <Stack.Screen name="Filter" component={Filter} options={{ headerShown: false, tabBarVisible: false }} />
-                <Stack.Screen name="Transaction" component={Transaction} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Navigator initialRouteName={isAuthenticated ? 'SignInScreen' : 'GuestStack'}>
+                <Stack.Screen name="Main" component={MainStack} options={{ headerShown: false }} />
+                <Stack.Screen name="Admin" component={AdminStack} options={{ headerShown: false }} />
                 <Stack.Screen name="SignInScreen" component={SignInScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="ProfileUser" component={ProfileUser} options={{ headerShown: false }} />
-                <Stack.Screen name="EditBoat" component={EditBoat} options={{ headerShown: false }} />
-                <Stack.Screen name="Test" component={Test} options={{ headerShown: false }} />
                 <Stack.Screen name="VerifyEmailScreen" component={VerifyEmailScreen} options={{ headerShown: false }} />
-                
             </Stack.Navigator>
         </NavigationContainer>
+    );
+};
+
+
+const MainStack = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="HomeScreen" component={TabGroup} options={{ headerShown: false }} />
+            <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="ProfilSettingScreen" component={ProfilSettingScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Publication" component={Publication} options={{ headerShown: false }} />
+            <Stack.Screen name="Photos" component={Photos} options={{ headerShown: false }} />
+            <Stack.Screen name="ProfilScreen" component={ProfilScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="Filter" component={Filter} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="Transaction" component={Transaction} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="ProfileUser" component={ProfileUser} options={{ headerShown: false }} />
+            <Stack.Screen name="EditBoat" component={EditBoat} options={{ headerShown: false }} />
+            <Stack.Screen name="Test" component={Test} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    );
+};
+
+const GuestStack = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="HomeScreen" component={TabGroup} options={{ headerShown: false }} />
+            <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="ProfilSettingScreen" component={ProfilSettingScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Publication" component={Publication} options={{ headerShown: false }} />
+            <Stack.Screen name="Photos" component={Photos} options={{ headerShown: false }} />
+            <Stack.Screen name="ProfilScreen" component={ProfilScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="Filter" component={Filter} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="Transaction" component={Transaction} options={{ headerShown: false, tabBarVisible: false }} />
+            <Stack.Screen name="ProfileUser" component={ProfileUser} options={{ headerShown: false }} />
+            <Stack.Screen name="EditBoat" component={EditBoat} options={{ headerShown: false }} />
+            <Stack.Screen name="Test" component={Test} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    );
+};
+
+const AdminStack = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="User" component={AdministrerCompte} options={{ headerShown: false }} />
+            <Stack.Screen name="ProfileUser" component={ProfileUser} options={{ headerShown: false }} />
+            <Stack.Screen name="Publication" component={Publication} options={{ headerShown: false }} />
+        </Stack.Navigator>
     );
 };
 

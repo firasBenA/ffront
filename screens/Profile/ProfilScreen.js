@@ -19,7 +19,7 @@ const ProfilScreen = ({ route }) => {
     const [avatar, setAvatar] = useState('');
     const [boats, setBoats] = useState([]);
     const [userId, setUserId] = useState();
-
+    const [IdRole, setIdRole] = useState(null);
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -28,16 +28,14 @@ const ProfilScreen = ({ route }) => {
     const [country, setCountry] = useState('');
     const [city, setCity] = useState('');
 
-    //const { userId } = route.params;
     const [refreshing, setRefreshing] = useState(false);
-
 
     let [fontsLoaded] = useFonts({
         'Lato-Bold': require('../../assets/Fonts//Lato/Lato-Bold.ttf'),
         'Lato-Regular': require('../../assets/Fonts//Lato/Lato-Regular.ttf'),
         'Lato-Black': require('../../assets/Fonts//Lato/Lato-Black.ttf'),
-
     });
+
     if (!fontsLoaded) {
         return null;
     }
@@ -45,46 +43,20 @@ const ProfilScreen = ({ route }) => {
     const navigation = useNavigation();
 
     const onRefresh = async () => {
-        setRefreshing(true); // Set refreshing to true
-        await fetchBoats(userId); // Fetch boats again
-        setRefreshing(false); // Set refreshing to false when done
+        setRefreshing(true); 
+        await fetchBoats(userId);
+        setRefreshing(false); 
     };
-
-
-    /*const fetchBoats = async (userId) => {
-        console.log(userId)
-        try {
-            const response = await axios.get(`${BASE_URL}api/Boat/boats/user/${userId}`);
-            setBoats(response.data);
-        } catch (error) {
-            if (error.response) {
-                console.error('Error fetching boats - Status:', error.response.status);
-                console.error('Error fetching boats - Data:', error.response.data);
-            } else if (error.request) {
-                console.error('Error fetching boats - No response received');
-            } else {
-                console.error('Error fetching boats - Request setup:', error.message);
-            }
-        }
-    };*/
 
     const updateAvatar = async (userId, userDataToUpdate) => {
         try {
             const token = await AsyncStorage.getItem('token');
-
-            console.log('userDataToUpdate:', userDataToUpdate); // Log the data being sent in the update request
-
-            const response = await axios.put(`${BASE_URL}updateAvatarImage/${userId}`,
-                userDataToUpdate,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            console.log('Update user response:', response.data);
+            const response = await axios.put(`${BASE_URL}updateAvatarImage/${userId}`, userDataToUpdate, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
             return response.data;
         } catch (error) {
             console.error('Error updating user:', error);
@@ -93,7 +65,6 @@ const ProfilScreen = ({ route }) => {
     };
 
     const handleUpdateAvatar = async (id, imageUrl) => {
-
         try {
             const formData = new FormData();
             formData.append('file', {
@@ -101,8 +72,6 @@ const ProfilScreen = ({ route }) => {
                 type: 'image/jpeg',
                 name: 'avatar_image.jpg',
             });
-
-            console.log('FormData:', formData);
 
             const updateAvatarResponse = await axios.put(`${BASE_URL}updateAvatarImage/${id}`, formData, {
                 headers: {
@@ -130,15 +99,11 @@ const ProfilScreen = ({ route }) => {
         const result = await launchImageLibraryAsync(options);
 
         if (!result.cancelled) {
-            const imageUrl = result.assets[0].uri; // Add BASE_URL and format the image URL
-            console.log('Formatted Image URL:', imageUrl); // Log the formatted image URL
-
-            console.log('aaa', imageUrl);
+            const imageUrl = result.assets[0].uri;
             setAvatar(imageUrl);
             handleUpdateAvatar(userId, imageUrl);
         }
     };
-
 
     const goToReservation = async () => {
         navigation.navigate("Transaction");
@@ -147,7 +112,6 @@ const ProfilScreen = ({ route }) => {
     const handleLogout = async () => {
         const success = await logout();
         if (success) {
-            console.log('Logout successful');
             navigation.replace('SignInScreen');
         } else {
             console.log('Logout failed');
@@ -155,14 +119,11 @@ const ProfilScreen = ({ route }) => {
     };
 
     const handleCardPress = async (boat) => {
-
         const { id: boatId, userId } = boat;
         navigation.navigate('Publication', { boatId, userId });
-
     };
 
     const handleParametrePress = () => {
-
         navigation.navigate('ProfilSettingScreen')
     };
 
@@ -180,10 +141,9 @@ const ProfilScreen = ({ route }) => {
                     setCountry(userData.country);
                     setCity(userData.city);
                     setPassword(userData.password);
+                    setIdRole(userData.idRole);
 
                     fetchBoats(userData.id);
-
-
                 } else {
                     console.log('User data not found.');
                 }
@@ -193,15 +153,12 @@ const ProfilScreen = ({ route }) => {
         };
 
         getUserData();
-        console.log(userId);
     }, []);
-
 
     const fetchBoats = async (userId) => {
         try {
             const response = await axios.get(`${BASE_URL}api/Boat/boats/user/${userId}`);
             setBoats(response.data);
-
         } catch (error) {
             if (error.response) {
                 console.log('Error fetching boats - Status:', error.response.status);
@@ -214,80 +171,96 @@ const ProfilScreen = ({ route }) => {
         }
     };
 
+    const handleRestrictedAction = () => {
+        Alert.alert(
+            "Access Denied",
+            "You need to sign in to perform this action.",
+            [
+                {
+                    text: "OK",
+                    onPress: () => navigation.navigate('SignInScreen'),
+                },
+            ],
+        );
+    };
+
     return (
-        <ScrollView style={styles.container}
-            refreshControl={
-                <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                />
-            }>
-            <Header />
-            <View style={[{ height: windowHeight * 0.95 }]}>
-                <BackgroundImage
-                    source={require("../../assets/image/backImg2.jpeg")}
-                    style={[{ height: "80%" }]}
-                >
-                    <View style={styles.cardContainer}>
-                        <Icon name="cog" size={30} color="grey" style={styles.icon} onPress={handleParametrePress} />
-                        <View style={styles.whiteCard}>
-                            {avatar ? (
-                                <Image source={{ uri: `${BASE_URL}` + avatar }} style={styles.profileImg} />
-                            ) : (
-                                <Image source={require('../../assets/image/user.png')} style={styles.profileImg} />
-                            )}
-                            <TouchableOpacity style={styles.overlayIcon} onPress={selectImage}>
-                                <Icon name="camera" size={24} color="grey" style={{ alignSelf: 'center' }} />
-                            </TouchableOpacity>
-                            <Text style={{ fontFamily: "Lato-Regular", fontSize: 20 }}>Hi, I am {name}</Text>
-                            <Text style={{ marginVertical: 15, fontSize: 16, fontFamily: "Lato-Regular", color: 'grey' }}>@{name}</Text>
-                            <View style={{ marginVertical: 10 }}>
-                                <Text style={{ fontSize: 18, fontFamily: "Lato-Bold", alignSelf: "center" }}>{name}</Text>
-                                <Text style={{ fontSize: 18, fontFamily: "Lato-Bold" }}>@{name}123</Text>
+        IdRole === null ? (
+            <View style={styles.container}>
+                <Text>Loading...</Text>
+            </View>
+        ) : IdRole === 2 ? (
+            <ScrollView
+                style={styles.container}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />
+                }
+            >
+                <Header />
+                <View style={[{ height: windowHeight * 0.95 }]}>
+                    <BackgroundImage
+                        source={require("../../assets/image/backImg2.jpeg")}
+                        style={[{ height: "80%" }]}
+                    >
+                        <View style={styles.cardContainer}>
+                            <Icon name="cog" size={30} color="grey" style={styles.icon} onPress={handleParametrePress} />
+                            <View style={styles.whiteCard}>
+                                {avatar ? (
+                                    <Image source={{ uri: `${BASE_URL}` + avatar }} style={styles.profileImg} />
+                                ) : (
+                                    <Image source={require('../../assets/image/user.png')} style={styles.profileImg} />
+                                )}
+                                <TouchableOpacity style={styles.overlayIcon} onPress={selectImage}>
+                                    <Icon name="camera" size={24} color="grey" style={{ alignSelf: 'center' }} />
+                                </TouchableOpacity>
+                                <Text style={{ fontFamily: "Lato-Regular", fontSize: 20 }}>Hi, I am {name}</Text>
+                                <Text style={{ marginVertical: 15, fontSize: 16, fontFamily: "Lato-Regular", color: 'grey' }}>@{name}</Text>
+                                <View style={{ marginVertical: 10 }}>
+                                    <Text style={{ fontSize: 18, fontFamily: "Lato-Bold", alignSelf: "center" }}>{name}</Text>
+                                    <Text style={{ fontSize: 18, fontFamily: "Lato-Bold" }}>@{name}123</Text>
+                                </View>
                             </View>
                         </View>
+                    </BackgroundImage>
 
-                    </View>
-                </BackgroundImage>
+                    <TouchableOpacity style={styles.button} onPress={goToReservation}>
+                        <Text style={styles.buttonText}>Transaction</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={styles.button} onPress={goToReservation}>
-                    <Text style={styles.buttonText}>Transaction</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.button} onPress={handleLogout}>
-                    <Text style={styles.buttonText}>Logout</Text>
-                </TouchableOpacity>
-            </View>
-            <View>
-                <Text style={{ alignSelf: "center", marginBottom: 20, fontFamily: 'Lato-Bold', fontSize: 20 }}>My Boats</Text>
-            </View>
-            {boats.map((boat) => (
-                <TouchableOpacity onPress={() => handleCardPress(boat)}>
-
-                    <Card
-                        key={boat.id}
-                        boatId={boat.id}
-                        title="3 - 8 hours * No Captain"
-                        imageUrl={`${BASE_URL}${boat.imageUrl}`}
-                        description={boat.description}
-                        userId={boat.userId}
-                        capacity={boat.capacity}
-                        nbrCabins={boat.nbrCabins}
-                        nbrBedrooms={boat.nbrBedrooms}
-                        price={boat.price}
-                        city={boat.city}
-                        country={boat.country}
-                        showIcon={true}
-                    >
-
-                    </Card>
-                </TouchableOpacity>
-
-            ))}
-        </ScrollView>
+                    <TouchableOpacity style={styles.button} onPress={handleLogout}>
+                        <Text style={styles.buttonText}>Logout</Text>
+                    </TouchableOpacity>
+                </View>
+                <View>
+                    <Text style={{ alignSelf: "center", marginBottom: 20, fontFamily: 'Lato-Bold', fontSize: 20 }}>My Boats</Text>
+                </View>
+                {boats.map((boat) => (
+                    <TouchableOpacity onPress={() => handleCardPress(boat)} key={boat.id}>
+                        <Card
+                            boatId={boat.id}
+                            title="3 - 8 hours * No Captain"
+                            imageUrl={`${BASE_URL}${boat.imageUrl}`}
+                            description={boat.description}
+                            userId={boat.userId}
+                            capacity={boat.capacity}
+                            nbrCabins={boat.nbrCabins}
+                            nbrBedrooms={boat.nbrBedrooms}
+                            price={boat.price}
+                            city={boat.city}
+                            country={boat.country}
+                            showIcon={true}
+                        />
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+        ) : (
+            handleRestrictedAction()
+        )
     );
-};
-
+}
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -307,20 +280,17 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         justifyContent: "center",
         marginTop: 100,
-
     },
     whiteCard: {
         alignSelf: "center",
         alignItems: "center",
         justifyContent: "center",
-
     },
     profileImg: {
         borderRadius: 150,
         width: 170,
         height: 170,
         marginVertical: 30,
-
     },
     button: {
         borderWidth: 0.5,
@@ -350,7 +320,6 @@ const styles = StyleSheet.create({
         padding: 6,
         backgroundColor: "white"
     },
-
 });
 
 export default ProfilScreen;

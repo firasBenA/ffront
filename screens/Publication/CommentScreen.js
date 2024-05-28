@@ -5,10 +5,10 @@ import axios from 'axios';
 import { BASE_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RatingModal from './RatingModal';
+import { useNavigation } from '@react-navigation/native';
 
 const Comment = ({ comment, text, time, rating }) => {
     const { user } = comment;
-
     if (!user) {
         return <Text>Error: User data not available</Text>;
     }
@@ -38,7 +38,6 @@ const Comment = ({ comment, text, time, rating }) => {
                         <Image source={require('../../assets/image/user.png')} style={styles.profileImage} />
                     )}
                     <View style={{ flexDirection: 'column' }}>
-
                         <Text style={[styles.profileName, { marginBottom: 8 }]}>{user.name}</Text>
                         <Text style={styles.time}>{time}</Text>
                     </View>
@@ -62,9 +61,26 @@ const CommentScreen = ({ boatId }) => {
     const [rating, setRating] = useState(0);
     const [newComment, setNewComment] = useState('');
     const [feedbackCount, setFeedbackCount] = useState(0);
+    const [userRole, setUserRole] = useState(null);
+
+    const navigation = useNavigation();
 
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible);
+    };
+
+    const handleRestrictedAction = () => {
+        Alert.alert(
+            "Access Denied",
+            "You need to sign in to perform this action.",
+            [
+                {
+                    text: "OK",
+                    onPress: () => navigation.navigate('SignInScreen'),
+                },
+            ],
+            { cancelable: false }
+        );
     };
 
     const handleModalSubmit = async (rating, comment) => {
@@ -72,11 +88,6 @@ const CommentScreen = ({ boatId }) => {
             const userDataString = await AsyncStorage.getItem('user');
             const user = JSON.parse(userDataString);
             const userId = user.id;
-
-            console.log("Rating:", rating);
-            console.log("Comment:", comment);
-            console.log("User ID:", userId);
-            console.log("Boat ID:", boatId);
 
             // Check if the user has already submitted a rating for the boat
             const existingRatingResponse = await axios.get(`${BASE_URL}api/Feedback/ByUserAndBoatId/${userId}/${boatId}`);
@@ -90,12 +101,10 @@ const CommentScreen = ({ boatId }) => {
                     IdBoat: boatId,
                 });
 
-                console.log("Feedback Submission Response:", response.data);
                 setRating(0);
                 setNewComment('');
                 toggleModal();
             } else {
-                console.log("Existing Rating Response:", existingRatingResponse.data);
                 // If the response is not 0, it means feedback exists, so display a message
                 Alert.alert(
                     'Already Rated',
@@ -108,11 +117,17 @@ const CommentScreen = ({ boatId }) => {
         }
     };
 
-
-
-
-
     useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const userDataString = await AsyncStorage.getItem('user');
+                const user = JSON.parse(userDataString);
+                setUserRole(user.idRole);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
         const fetchFeedbacks = async () => {
             try {
                 const response = await axios.get(`${BASE_URL}api/Feedback/ByBoatId/${boatId}`);
@@ -141,6 +156,7 @@ const CommentScreen = ({ boatId }) => {
             }
         };
 
+        fetchUser();
         fetchFeedbacks();
     }, [boatId]);
 
@@ -150,16 +166,25 @@ const CommentScreen = ({ boatId }) => {
                 {comments.length === 0 ? (
                     <View>
                         <Text style={styles.commentText}>No comments available</Text>
-                        <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-                            <Text style={styles.modalButtonText}>Rate and Comment</Text>
-                        </TouchableOpacity>
+                        {userRole === null ? (
+                            <View style={styles.container}>
+                                <Text>Loading...</Text>
+                            </View>
+                        ) : userRole === 2 ? (
+                            <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+                                <Text style={styles.modalButtonText}>Rate and Comment</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity style={styles.modalButton} onPress={handleRestrictedAction}>
+                                <Text style={styles.modalButtonText}>Rate and Comment</Text>
+                            </TouchableOpacity>
+                        )}
                         <RatingModal
                             visible={isModalVisible}
                             onClose={toggleModal}
                             onSubmit={handleModalSubmit}
                         />
                     </View>
-
                 ) : (
                     <>
                         <ScrollView style={styles.scrollView}>
@@ -167,9 +192,19 @@ const CommentScreen = ({ boatId }) => {
                                 <Comment key={index} comment={comment} text={comment.text} time={comment.time} rating={comment.rating} />
                             ))}
                         </ScrollView>
-                        <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-                            <Text style={styles.modalButtonText}>Rate and Comment</Text>
-                        </TouchableOpacity>
+                        {userRole === null ? (
+                            <View style={styles.container}>
+                                <Text>Loading...</Text>
+                            </View>
+                        ) : userRole === 2 ? (
+                            <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+                                <Text style={styles.modalButtonText}>Rate and Comment</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity style={styles.modalButton} onPress={handleRestrictedAction}>
+                                <Text style={styles.modalButtonText}>Rate and Comment</Text>
+                            </TouchableOpacity>
+                        )}
                         <RatingModal
                             visible={isModalVisible}
                             onClose={toggleModal}
@@ -181,7 +216,6 @@ const CommentScreen = ({ boatId }) => {
         </View>
     );
 };
-
 
 const styles = StyleSheet.create({
     container: {
@@ -239,8 +273,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 10,
         alignSelf: 'center',
-        borderWidth:1,
-        borderColor:"dodgerblue"
+        borderWidth: 1,
+        borderColor: "dodgerblue"
     },
     modalButtonText: {
         color: 'dodgerblue',

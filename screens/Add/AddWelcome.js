@@ -39,6 +39,7 @@ const AddWelcome = () => {
 
     const [userId, setUserId] = useState(0);
     const [id, setId] = useState(59);
+    const [idRole, setIdRole] = useState(null);
     const [name, setName] = useState('');
     const [capacity, setCapacity] = useState(1);
     const [description, setDescription] = useState('A luxurious yacht for coastal cruises.');
@@ -63,6 +64,21 @@ const AddWelcome = () => {
     const [pilotAutomatique, setPilotAutomatique] = useState(0);
     const [shower, setShower] = useState(0);
     const [speaker, setSpeaker] = useState(0);
+
+
+    const handleRestrictedAction = () => {
+        Alert.alert(
+          "Access Denied",
+          "You need to sign in to perform this action.",
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate('SignInScreen'),
+            },
+          ],
+          { cancelable: false }
+        );
+      };
 
     const handleButtonPress = (label) => {
         switch (label) {
@@ -146,8 +162,10 @@ const AddWelcome = () => {
                 const user = JSON.parse(userData);
                 const userId = user.id;
                 const userName = user.name;
+                const userIdRole = user.idRole;
                 setUserName(userName);
                 setUserId(userId);
+                setIdRole(userIdRole);
                 console.log('User:', JSON.stringify(user));
                 return userId; // Return the user ID
             } else {
@@ -767,49 +785,46 @@ const AddWelcome = () => {
 
     );
 
-
-
-
     return (
-        <View style={styles.mainContainer}>
-            <ScrollView style={styles.formContainer}>
-                {step === 0 && renderStepOne()}
-                {step === 1 && renderStepTwo()}
-                {step === 2 && renderStepThree()}
-                {step === 3 && renderStepFour()}
-                {step === 4 && renderStepFive()}
-                {step === 5 && renderStepSix()}
-
-
-
-
-            </ScrollView>
-            <View >
-                <View style={styles.progressBar}>
-                    {[...Array(totalSteps)].map((_, index) => (
-                        <View key={index} style={[styles.progressStep, index < step && styles.progressStepActive]} />
-                    ))}
-                </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginHorizontal: 10, backgroundColor: "white" }}>
-                    <TouchableOpacity style={{ flexDirection: "row", marginVertical: 30 }} onPress={handlePreviousStep}>
-                        <Image source={require("../../assets/icons/right-arrow.png")} style={{ width: 20, height: 20, marginHorizontal: 10 }} />
-                        <Text>Back</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={{ flexDirection: "row", marginVertical: 30 }} onPress={handleNextStep}>
-                        <Text>Next</Text>
-                        <Image source={require("../../assets/icons/right-arrow.png")} style={{ width: 20, height: 20, marginHorizontal: 10 }} />
-                    </TouchableOpacity>
-
-
+        idRole === null ? (
+            <View style={styles.container}>
+                <Text>Loading...</Text>
+            </View>
+        ) : idRole === 2 ? (
+            <View style={styles.mainContainer}>
+                <ScrollView style={styles.formContainer}>
+                    {step === 0 && renderStepOne()}
+                    {step === 1 && renderStepTwo()}
+                    {step === 2 && renderStepThree()}
+                    {step === 3 && renderStepFour()}
+                    {step === 4 && renderStepFive()}
+                    {step === 5 && renderStepSix()}
+                </ScrollView>
+                <View>
+                    <View style={styles.progressBar}>
+                        {[...Array(totalSteps)].map((_, index) => (
+                            <View key={index} style={[styles.progressStep, index < step && styles.progressStepActive]} />
+                        ))}
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginHorizontal: 10, backgroundColor: "white" }}>
+                        <TouchableOpacity style={{ flexDirection: "row", marginVertical: 30 }} onPress={handlePreviousStep}>
+                            <Image source={require("../../assets/icons/right-arrow.png")} style={{ width: 20, height: 20, marginHorizontal: 10 }} />
+                            <Text>Back</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{ flexDirection: "row", marginVertical: 30 }} onPress={handleNextStep}>
+                            <Text>Next</Text>
+                            <Image source={require("../../assets/icons/right-arrow.png")} style={{ width: 20, height: 20, marginHorizontal: 10 }} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
-
-
-        </View>
+        ) : (
+            handleRestrictedAction()
+        )
     );
-};
+    
 
-
+}
 
 const styles = StyleSheet.create({
     mainContainer: {
@@ -1050,7 +1065,6 @@ const styles = StyleSheet.create({
         borderWidth: 2, // Border width when selected
     }
 });
-
 
 
 

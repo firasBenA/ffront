@@ -19,7 +19,7 @@ const SignInScreen = () => {
     const [error, setError] = useState('');
     const [isChecked, setIsChecked] = useState(false);
 
-    
+
     let [fontsLoaded] = useFonts({
         'Lato-Bold': require('../../assets/Fonts//Lato/Lato-Bold.ttf'),
         'Lato-Regular': require('../../assets/Fonts//Lato/Lato-Regular.ttf'),
@@ -36,31 +36,37 @@ const SignInScreen = () => {
             Alert.alert('Error', 'Please enter both email and password.');
             return;
         }
-    
+
         const success = await login(email, password);
-    
+
         if (!success) {
             setError('Invalid email or password.');
         } else {
             const userData = await AsyncStorage.getItem('user');
             const token = await AsyncStorage.getItem('token');
-    
+
             console.log(userData);
-    
+
             if (userData) {
                 const user = JSON.parse(userData);
+                console.log('user:', user); 
                 const userId = user.id;
                 const active = user.active;
-    
-                if (active === 1) {
-                    navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'HomeScreen' }],
-                    });
-    
-                    console.log('User:', JSON.stringify(user));
+                const userRole = user.idRole;
+                console.log('userRole:', userRole); 
 
-                    return userId; 
+                if (active === 1) {
+                    if (userRole === 1) {
+                        navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'Admin' }],
+                        });
+                    } else {
+                        navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'Main' }],
+                        });
+                    }
                 } else {
                     // User is not active
                     Alert.alert('User is not active. Please contact support or Relode The App.');
@@ -72,7 +78,7 @@ const SignInScreen = () => {
             }
         }
     };
-    
+
 
 
 
@@ -222,7 +228,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-       // paddingTop: Platform.OS === 'ios' ? 40 : 20,
+        // paddingTop: Platform.OS === 'ios' ? 40 : 20,
         //paddingBottom: Platform.OS === 'ios' ? 40 : 20,
         backgroundColor: "white",
     },
@@ -238,7 +244,7 @@ const styles = StyleSheet.create({
         fontSize: 30,
         marginBottom: 10,
         fontFamily: 'Lato-Bold',
-        color:"#0B2447"
+        color: "#0B2447"
     },
 
     hiText: {
